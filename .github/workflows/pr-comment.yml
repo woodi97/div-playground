@@ -7,11 +7,10 @@ on:
     types: [created, edited, deleted]
 
 jobs:
-  in-review:
+  Test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        id: check-body
       - run: |
           body=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" | jq -r .body)
