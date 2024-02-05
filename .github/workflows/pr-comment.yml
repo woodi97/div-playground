@@ -22,6 +22,7 @@ jobs:
           fi
 
           echo "PR body does not contain '리뷰중'. Proceeding with merge."
+          exit 0
         shell: bash
 
       - name: Prevent workflow from running on future comment edits
