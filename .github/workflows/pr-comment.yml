@@ -1,4 +1,5 @@
 name: Pull request comment
+
 on:
   issue_comment:
     types: [created, edited, deleted]
@@ -6,7 +7,7 @@ on:
 jobs:
   pull_request_comment:
     if: contains(github.event.comment.html_url, '/pull/') # check if the comments come from pull request, exclude those from issue.
-    runs-on: [macos-latest]
+    runs-on: ubuntu-latest
     steps:
       - name: Deploy
         if: contains(github.event.comment.body, '/deploy') # check the comment if it contains the keywords
