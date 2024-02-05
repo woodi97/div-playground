@@ -19,4 +19,6 @@ jobs:
             echo "PR body contains '리뷰중'. Blocking merge."
             exit 1
           fi
+
+          echo "PR body does not contain '리뷰중'. Proceeding with merge."
         shell: bash
