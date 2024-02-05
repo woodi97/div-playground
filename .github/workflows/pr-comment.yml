@@ -1,17 +1,18 @@
-name: Pull request comment
+name: Prevent PR merge with '리뷰중' in comment
 
 on:
-  issue_comment:
+  pull_request:
     branches:
       - feature/**
-    types: [created, edited, deleted]
+    types: [opened, synchronize]
 
 jobs:
-  Test:
+  prevent-merge:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: |
+      - uses: actions/checkout@v2
+      - name: Check PR body for '리뷰중'
+        run: |
           body=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" | jq -r .body)
 
@@ -22,3 +23,10 @@ jobs:
 
           echo "PR body does not contain '리뷰중'. Proceeding with merge."
         shell: bash
+
+      - name: Prevent workflow from running on future comment edits
+        run: |
+          if [[ "${{ github.event.action }}" == "synchronize" ]]; then
+            echo "PR has been synchronized. Exiting workflow."
+            exit 0
+          fi
