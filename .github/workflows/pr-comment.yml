@@ -1,33 +1,41 @@
-name: Prevent PR merge with '리뷰중' in comment
+name: Pull request comment
 
 on:
-  pull_request:
-    branches:
-      - feature/**
-    types: [opened, synchronize]
+  issue_comment:
+    types: [created, edited, deleted]
 
 jobs:
-  prevent-merge:
+  pull_request_comment:
+    if: contains(github.event.comment.html_url, '/pull/') # check if the comments come from pull request, exclude those from issue.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Check PR body '리뷰중'
-        run: |
-          body=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" | jq -r .body)
-
-          if [[ $body == *"리뷰중"* ]]; then
-            echo "PR body contains '리뷰중'. Blocking merge."
-            exit 1
-          fi
-
-          echo "PR body does not contain '리뷰중'. Proceeding with merge."
-          exit 0
-        shell: bash
-
-      - name: Prevent workflow from running on future comment edits
-        run: |
-          if [[ "${{ github.event.action }}" == "synchronize" ]]; then
-            echo "PR has been synchronized. Exiting workflow."
-            exit 0
-          fi
+      - name: Make Status Pending
+        if: contains(github.event.comment.body, '/in-review') # check the comment if it contains the keywords
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            # make status pending
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'pending',
+              description: 'In review',
+              context: 'In review'
+            })
+      - name: Make Status Success
+        if: contains(github.event.comment.body, '/approve') # check the comment if it contains the keywords
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            # make status success
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'success',
+              description: 'Approved',
+              context: 'Approved'
+            })
