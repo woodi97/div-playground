@@ -1,0 +1,23 @@
+name: Pull request comment
+
+on:
+  issue_comment:
+    branches:
+      - feature/**
+    types: [created, edited, deleted]
+
+jobs:
+  in-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        id: check-body
+      - run: |
+          body=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" | jq -r .body)
+
+          if [[ $body == *"리뷰중"* ]]; then
+            echo "PR body contains '리뷰중'. Blocking merge."
+            exit 1
+          fi
+        shell: bash
